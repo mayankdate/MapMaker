@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Personal Map Studio</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app">
+    <section class="map-pane">
+      <div class="map-header">
+        <div class="search">
+          <input id="search-input" type="text" placeholder="Search a place (city, address, landmark)…" />
+          <button id="search-button">Search</button>
+        </div>
+        <div id="search-results" class="search-results hidden"></div>
+        <div class="map-hints">
+          <span id="bbox-status">Draw a rectangle with the ▢ tool to select your print area.</span>
+        </div>
+      </div>
+      <div id="map"></div>
+    </section>
+
+    <aside class="controls">
+      <h1>Personal Map Studio</h1>
+
+      <section>
+        <h2>1. Area</h2>
+        <label class="row">
+          <input type="checkbox" id="include-buildings" />
+          <span>Include buildings (slower fetch)</span>
+        </label>
+        <button id="fetch-button" class="primary">Fetch features for selected area</button>
+        <div id="fetch-status" class="status"></div>
+      </section>
+
+      <section>
+        <h2>2. Markers</h2>
+        <div class="marker-add">
+          <button id="add-marker-here">+ Add at map center</button>
+          <label class="row">
+            <input type="checkbox" id="marker-click-mode" />
+            <span>Click map to drop marker</span>
+          </label>
+        </div>
+        <div class="marker-add">
+          <button id="add-marker-coords">+ Add by coordinates…</button>
+        </div>
+        <div class="icon-picker">
+          <label>Default icon for new markers</label>
+          <div id="icon-choices" class="icon-choices"></div>
+        </div>
+        <ul id="marker-list" class="marker-list"></ul>
+      </section>
+
+      <section>
+        <h2>3. Layers</h2>
+        <div id="layer-controls" class="layer-controls"></div>
+      </section>
+
+      <section>
+        <h2>4. Text labels <span class="muted">(off by default)</span></h2>
+        <div class="label-group">
+          <label class="row">
+            <input type="checkbox" id="show-place-labels" />
+            <span><strong>Show place labels</strong></span>
+          </label>
+          <div class="sub-checks">
+            <label><input type="checkbox" data-place-tier="cities" checked /> Cities</label>
+            <label><input type="checkbox" data-place-tier="towns" checked /> Towns / boroughs</label>
+            <label><input type="checkbox" data-place-tier="suburbs" /> Suburbs / neighbourhoods</label>
+            <label><input type="checkbox" data-place-tier="villages" /> Villages / hamlets</label>
+          </div>
+        </div>
+        <div class="label-group">
+          <label class="row">
+            <input type="checkbox" id="show-road-labels" />
+            <span><strong>Show road names</strong></span>
+          </label>
+          <div class="sub-checks">
+            <label><input type="checkbox" id="show-road-labels-major" checked /> Major roads</label>
+            <label><input type="checkbox" id="show-road-labels-minor" /> Minor roads</label>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>5. Colors &amp; page</h2>
+        <div class="color-grid">
+          <label>Land <input type="color" data-style="land" value="#45645f" /></label>
+          <label>Water <input type="color" data-style="water" value="#1c292e" /></label>
+          <label>Parks <input type="color" data-style="parks" value="#38574f" /></label>
+          <label>Buildings <input type="color" data-style="buildings" value="#3c5752" /></label>
+          <label>Major roads <input type="color" data-style="major" value="#a0b6ae" /></label>
+          <label>Minor roads <input type="color" data-style="minor" value="#819b94" /></label>
+          <label>Rail <input type="color" data-style="rail" value="#293c3b" /></label>
+          <label>Marker <input type="color" data-style="marker" value="#e1ad69" /></label>
+          <label>Title <input type="color" data-style="text" value="#fffaf0" /></label>
+          <label>Labels <input type="color" data-style="label" value="#d8ccb3" /></label>
+        </div>
+        <div class="row">
+          <label>Title text <input type="text" id="title-input" value="MAP" /></label>
+        </div>
+        <div class="row">
+          <label>Title placement
+            <select id="title-placement">
+              <option value="bottom">Bottom center</option>
+              <option value="left">Left vertical</option>
+              <option value="hidden">Hidden</option>
+            </select>
+          </label>
+        </div>
+        <label class="row">
+          <input type="checkbox" id="show-attribution" checked />
+          <span>Include OpenStreetMap attribution</span>
+        </label>
+        <div class="row">
+          <label>Long edge (in) <input type="number" id="long-side-in" value="12" step="0.5" min="4" max="40" /></label>
+        </div>
+        <div class="row">
+          <span class="hint" id="dimensions-hint">Draw a rectangle to see final dimensions.</span>
+        </div>
+        <div class="row">
+          <label>Marker size <input type="range" id="marker-size" min="6" max="40" step="1" value="15" /></label>
+          <span id="marker-size-label">15</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>6. Preview</h2>
+        <button id="preview-button" class="primary">Render preview</button>
+        <div id="preview-status" class="status"></div>
+        <div id="preview-wrap" class="preview-wrap hidden">
+          <img id="preview-image" alt="Preview" />
+        </div>
+      </section>
+
+      <section>
+        <h2>7. Export</h2>
+        <div class="export-formats">
+          <label><input type="checkbox" name="format" value="combined_png" checked /> Combined PNG <span class="muted">(300 dpi, one flat image)</span></label>
+          <label><input type="checkbox" name="format" value="combined_pdf" /> Combined PDF <span class="muted">(vector)</span></label>
+          <label><input type="checkbox" name="format" value="combined_svg" /> Combined SVG <span class="muted">(vector, editable in Illustrator / Inkscape)</span></label>
+          <label><input type="checkbox" name="format" value="layer_pngs" checked /> Per-layer PNGs <span class="muted">(transparent, stack in Procreate / Photoshop)</span></label>
+          <label><input type="checkbox" name="format" value="layer_geojson" /> Per-layer GeoJSON <span class="muted">(raw vector features)</span></label>
+        </div>
+        <button id="export-button" class="primary">Export to Outputs/</button>
+        <div id="export-status" class="status"></div>
+      </section>
+    </aside>
+  </div>
+
+  <div id="coord-modal" class="modal hidden">
+    <div class="modal-body">
+      <h3>Add marker by coordinates</h3>
+      <label>Latitude <input type="number" id="coord-lat" step="0.000001" placeholder="19.076" /></label>
+      <label>Longitude <input type="number" id="coord-lon" step="0.000001" placeholder="72.8777" /></label>
+      <label>Label (optional) <input type="text" id="coord-label" placeholder="Home" /></label>
+      <div class="modal-actions">
+        <button id="coord-cancel">Cancel</button>
+        <button id="coord-add" class="primary">Add marker</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
