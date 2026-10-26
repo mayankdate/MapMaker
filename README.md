@@ -5,7 +5,7 @@ printable, label-free street maps from OpenStreetMap data — the style used in
 those city poster prints (Bombay / Baltimore / Boston etc.).
 
 There is no server to deploy and no account to make. You run
-`python app.py`, the script starts a local web server on
+`uv run python app.py`, the script starts a local web server on
 `http://127.0.0.1:5000`, opens your browser to it, and you close the terminal
 when you're done.
 
@@ -26,25 +26,20 @@ when you're done.
 
 ## Setup
 
-You need Python 3.11 or newer.
+You need [uv](https://docs.astral.sh/uv/); it installs the right Python
+(`.python-version`) and the exact package versions in `uv.lock`:
 
 ```bash
-python -m venv .venv
-# Windows: .venv\Scripts\python.exe -m pip install -r requirements.txt
-# macOS/Linux:
-.venv/bin/python -m pip install -r requirements.txt
+uv sync
 ```
 
-`geopandas` pulls in native GIS libraries; if `pip install` complains on
-Windows, install `geopandas` first with `pip install geopandas` and re-run.
+`geopandas` and its GIS libraries install from pre-built wheels, so no extra
+system packages are needed.
 
 ## Run
 
 ```bash
-# Windows
-.venv\Scripts\python app.py
-# macOS/Linux
-.venv/bin/python app.py
+uv run python app.py
 ```
 
 Your browser opens `http://127.0.0.1:5000`. If it doesn't, open that URL

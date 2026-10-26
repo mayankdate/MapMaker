@@ -1,7 +1,7 @@
 # Project instructions for Claude and other coding assistants
 
 Personal Map Studio is a single Python script that runs a local Flask server
-and serves a browser UI. Users start it with `python app.py`. It is **not** a
+and serves a browser UI. Users start it with `uv run python app.py`. It is **not** a
 deployed web app, not an Electron wrapper, and no longer a Jupyter notebook —
 that earlier notebook version was replaced because its UI was too cramped.
 
